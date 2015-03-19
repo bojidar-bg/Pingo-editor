@@ -11,7 +11,7 @@ function SelectControl(options) {
 	options.text = "";
 	DropdownControl.call(this,options);
 	this._hasText = false;
-	self = this;
+	var self = this;
 	this.action.add(function(){self.setText(this.text);});
 }
 SelectControl.prototype = Object.create(DropdownControl.prototype);
