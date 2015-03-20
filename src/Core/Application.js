@@ -14,15 +14,18 @@ function Application(options) {
 	this.dataBackend = null;
 	this.menus = {};
 	this.menus.addPanel = new DropdownControl({text:"Add panel"});
+	this.menus.addLayer = new DropdownControl({text:"Add layer"});
 	this.menus.selectBackend = new SelectControl();
 	this.menus.selectBackend.add(new ListItem({text:"Select backend",disabled:true}));
 	this.menus.selectBackend.add(new ListItem({divider:true}));
 	this.register._app = this;
 	this.toolbar.add(this.menus.addPanel,{"right":true});
+	this.toolbar.add(this.menus.addLayer,{"right":true});
 	this.toolbar.add(this.menus.selectBackend,{"right":true});
 	//--Layers--//
-	var layers = $("#layers");
-	var layersHolder = $("#layers-holder");
+	this.layerHolder = new LayerHolder({"element":$("body")});
+	var layers = this.layerHolder.element;
+	var layersHolder = this.layerHolder.holderElement;
 	var startX = 0;
 	var startY = 0;
 	var currentX = 0;
@@ -162,7 +165,7 @@ Application.prototype.register = {};
  */
 Application.prototype.register.Panel = function(type)
 {
-	var li = new ListItem({"text":type.label});
+	var li = new ListItem({"text":(type.icon?"<img src=" + type.icon + " class='dropdown-icon'>":"") + type.label});
 	var t = type;
 	var self = this._app;
 	li.selected.add(function() {
@@ -178,11 +181,27 @@ Application.prototype.register.Panel = function(type)
  */
 Application.prototype.register.DataBackend = function(type)
 {
-	var li = new ListItem({"text":"<img src=" + type.icon + " class='dropdown-icon'>" + type.label});
+	var li = new ListItem({"text":(type.icon?"<img src=" + type.icon + " class='dropdown-icon'>":"") + type.label});
 	var t = type;
 	var self = this._app;
 	li.selected.add(function() {
 		self.dataBackend = new t(self,{});
 	});
 	this._app.menus.selectBackend.add(li);
+}
+/**
+ * Register a layer
+ * @param {function} type The layer class
+ * @method
+ */
+Application.prototype.register.Layer = function(type)
+{
+	var li = new ListItem({"text":(type.icon?"<img src=" + type.icon + " class='dropdown-icon'>":"") + type.label});
+	var t = type;
+	var self = this._app;
+	li.selected.add(function() {
+		var layer = new t(self);
+		self.layerHolder.add(layer);
+	});
+	this._app.menus.addLayer.add(li);
 }

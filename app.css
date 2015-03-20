@@ -29,7 +29,7 @@ input[type="checkbox"]{
 	border-radius: 4px !important;
 }
 .panel-target-element,.panel-target-surround , .panel-target-holder, html, body,
-	#right, #left, .panel-target, #layers-holder, #layers, .layer {
+	#right, #left, .panel-target, .layers-holder, .layers, .layer, .layers-overlay {
 	height:100%;
 }
 .slider-handle {
@@ -66,12 +66,12 @@ a .dropdown-icon {
 #left {
 	position: fixed;
 	left: 0;
-	z-index: 50;
+	z-index: 100;
 }
 #right {
 	position: fixed;
 	right: 0;
-	z-index: 50;
+	z-index: 100;
 }
 .panel {
 	margin-bottom:10px;
@@ -133,32 +133,39 @@ button.icon-btn {
 	margin-bottom: -1px;
 }
 /*---------------------------------Layers---------------------------------*/
-#layers-holder {
+.layers-holder {
 	width:100%;
 	position: absolute;
 	background-color:rgba(255, 255, 255, 0.5);
 	overflow: hidden;
 }
-#layers {
+.layers {
 	width:100%;
 	position: absolute;
 	overflow: visible;
 	transform-origin: 0 0 0;
 }
+.layers-overlay {
+	width:100%;
+	position:fixed;
+	z-index: 50;
+}
 .layer {
 	width:100%;
-	position: relative;
+	position: absolute;
+	top:0;
+	left:0;
 }
 #overlay {
 	width:0;
 	height:0;
 	position:fixed;
 	overflow:visible;
-	z-index: 52;
+	z-index: 250;
 }
 /*------------------------------Toolbar-----------------------------------*/
 .navbar {
-	z-index: 51;
+	z-index: 200;
 	padding-left: 10px;
 	padding-right: 10px;
 }

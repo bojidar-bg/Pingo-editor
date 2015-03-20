@@ -368,15 +368,18 @@ function Application(options) {
 	this.dataBackend = null;
 	this.menus = {};
 	this.menus.addPanel = new DropdownControl({text:"Add panel"});
+	this.menus.addLayer = new DropdownControl({text:"Add layer"});
 	this.menus.selectBackend = new SelectControl();
 	this.menus.selectBackend.add(new ListItem({text:"Select backend",disabled:true}));
 	this.menus.selectBackend.add(new ListItem({divider:true}));
 	this.register._app = this;
 	this.toolbar.add(this.menus.addPanel,{"right":true});
+	this.toolbar.add(this.menus.addLayer,{"right":true});
 	this.toolbar.add(this.menus.selectBackend,{"right":true});
 	//--Layers--//
-	var layers = $("#layers");
-	var layersHolder = $("#layers-holder");
+	this.layerHolder = new LayerHolder({"element":$("body")});
+	var layers = this.layerHolder.element;
+	var layersHolder = this.layerHolder.holderElement;
 	var startX = 0;
 	var startY = 0;
 	var currentX = 0;
@@ -516,7 +519,7 @@ Application.prototype.register = {};
  */
 Application.prototype.register.Panel = function(type)
 {
-	var li = new ListItem({"text":type.label});
+	var li = new ListItem({"text":(type.icon?"<img src=" + type.icon + " class='dropdown-icon'>":"") + type.label});
 	var t = type;
 	var self = this._app;
 	li.selected.add(function() {
@@ -532,13 +535,29 @@ Application.prototype.register.Panel = function(type)
  */
 Application.prototype.register.DataBackend = function(type)
 {
-	var li = new ListItem({"text":"<img src=" + type.icon + " class='dropdown-icon'>" + type.label});
+	var li = new ListItem({"text":(type.icon?"<img src=" + type.icon + " class='dropdown-icon'>":"") + type.label});
 	var t = type;
 	var self = this._app;
 	li.selected.add(function() {
 		self.dataBackend = new t(self,{});
 	});
 	this._app.menus.selectBackend.add(li);
+}
+/**
+ * Register a layer
+ * @param {function} type The layer class
+ * @method
+ */
+Application.prototype.register.Layer = function(type)
+{
+	var li = new ListItem({"text":(type.icon?"<img src=" + type.icon + " class='dropdown-icon'>":"") + type.label});
+	var t = type;
+	var self = this._app;
+	li.selected.add(function() {
+		var layer = new t(self);
+		self.layerHolder.add(layer);
+	});
+	this._app.menus.addLayer.add(li);
 }
 ;/**
 * Class for event-based stuff
@@ -585,21 +604,6 @@ Event.prototype.remove = function(handler)
 	this._handlers.splice(index, 1);
 	return true;
 }
-;/**
-* Class for Layers
-* @class
-* @param {Object} options Options for this Panel
-* @param {JQuery} options.element Layers's element
-*/
-function Layer(options) {
-	/**
-	* The Jquery element of this Layer
-	* @type {JQuery}
-	*/
-	this.element = $("<div class='layer'></div>");
-	options.element.append(this.element);
-}
-Layer.prototype = {};
 ;/**
 * Utility functions
 * @type {Object}
@@ -656,6 +660,70 @@ DataBackend.prototype.save = function(field, data) {}
 * @return {Object}       Data read
 */
 DataBackend.prototype.retrieve = function(field) {}
+;/**
+* Class for Layers
+* @class
+* @param {Object} options Options for this Panel
+*/
+function Layer(options) {
+	/**
+	* The Jquery element of this Layer
+	* @type {JQuery}
+	*/
+	this.element = $("<div class='layer'></div>");
+}
+Layer.prototype = {};
+;/**
+ * A class for layer holders
+ * @param {Object} options Options for this LayerHolder
+ * @param {Jquery} options.element Element for this LayerHolder
+ * @class
+ */
+function LayerHolder(options) {
+	/**
+	* The Jquery holder element of this LayerHolder
+	* @type {JQuery}
+	*/
+	this.holderElement = $("\
+	<div class='layers-holder'>\
+		<div class='layers'></div>\
+		<div class='layers-overlay'></div>\
+	</div>");
+	/**
+	* The Jquery element of this LayerHolder
+	* @type {JQuery}
+	*/
+	this.element = this.holderElement.children(".layers");
+	/**
+	 * The currently active layer
+	 */
+	this.activeLayer = false;
+	/**
+	* The Jquery overlay element of this LayerHolder
+	* @type {JQuery}
+	*/
+	this.overlayElement = this.holderElement.children(".layers-overlay");
+	var self = this;
+	this.overlayElement.on("\
+	click dblclick mousedown mouseup\
+	mousemove mouseover mouseout mouseenter mouseleave\
+	keypress keyup keydown",function(event){
+		if(!self.activeLayer)return;
+		var x = event.pageX;
+		var y = event.pageY;
+		self.activeLayer.element.find("*").nearest({x:x,y:y},{sameX:true,sameY:true}).trigger(event);
+	});
+	options.element.append(this.holderElement);
+}
+LayerHolder.prototype = {};
+/**
+ * Add a layer into this holder
+ * @param {Layer} layer The layer to be added
+ */
+LayerHolder.prototype.add = function(layer) {
+	this.element.append(layer.element);
+	this.activeLayer = layer;
+}
 ;/**
 * Class for Panels
 * @class
@@ -962,31 +1030,8 @@ function test()
 
 	app.register.Panel(CustomPanel);
 	app.register.DataBackend(NodeBackend);
+	app.register.Layer(CustomLayer);
 
-	layer = new Layer({element:$("#layers")});
-	var z = 0;
-	var cz = 1;
-	for(i =0; i<8; i++)
-	{
-		( function() {
-			var sx = 0;
-			var sy = 0;
-			var el = $("<div style='width:"+parseInt(Math.random()*6+2)*25+"px;height:"+parseInt(Math.random()*6+2)*25+"px;position:absolute;top:"+(20+i*140)+"px;left:"+(20+i*50)+"px;background:hsl("+parseInt(Math.random()*225)+",50%,50%);'></div>");
-			el.drag("dragstart",function(e,c) {
-				sx = parseInt(el.css("left"));
-				sy = parseInt(el.css("top"));
-				layer.element.append(el);
-			}).drag("drag",function(e,c) {
-				var left = sx + c.deltaX * (1/app._zoom);
-				var top = sy + c.deltaY * (1/app._zoom);
-				var to = app.snap(left,top);
-
-				$(this).css("left",to.x);
-				$(this).css("top",to.y);
-			});
-			layer.element.append(el);
-		})()
-	}
 }
 window.onload=test;
 //{class;extends Control}(options:{}) - Text control
