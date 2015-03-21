@@ -85,10 +85,62 @@ ButtonControl.prototype.setText = function(text) {
 * @return                this (for chaining)
 */
 ButtonControl.prototype.setState = ButtonControl.prototype.set = function(state) {
-	if(self._isToggle) {
-		self.element.toggleClass('active');
-		self.value = !self.value;
+	if(this._isToggle) {
+		if(state)
+		{
+			this.element.addClass('active');
+			this.value = true;
+		}
+		else
+		{
+			this.element.removeClass('active');
+			this.value = false;
+		}
 	}
+	return this;
+}
+;/**
+* Class for vertical lists of controls
+* @class
+* @extends Control
+* @param {Object} options - Options for this ColumnControl
+*/
+function ColumnControl(options) {
+	options = options || {};
+	Control.call(this);
+	/**
+	* The Jquery element of this ColumnControl
+	* @type {JQuery}
+	*/
+	this.element = $("<div class='panel panel-default'><div class='panel-body list'></div></div>");
+	/**
+	* The Jquery list element of this ColumnControl
+	* @type {JQuery}
+	*/
+	this.listElement = this.element.children(".list");
+}
+ColumnControl.prototype = Object.create(Control.prototype);
+ColumnControl._setLabel = function(label) {
+	this.holder.children("label").html(label);
+}
+/**
+* Adds a control to this RowControl (chainable)
+* @method
+* @param {Control} control The control to be added
+*/
+ColumnControl.prototype.add = function(control) {
+	var newlet;
+	if(control.label) {
+		newlet = $("<div class='from-group'><label class='col-xs-4 control-label'>"+control.label+"</label><div class='col-xs-8'></div><div class='clearfix'></div></div>");
+		newlet.children(".col-xs-8").append(control.element);
+	} else {
+		newlet = $("<div class='from-group'><div class='col-xs-12'></div><div class='clearfix'></div></div>");
+		newlet.children(".col-xs-12").append(control.element);
+	}
+	control.holder = newlet;
+	control.setLabel = ColumnControl._setLabel;
+	this.listElement.append(newlet);
+	//this.holder._updateScrollbar();
 	return this;
 }
 ;/**
@@ -284,6 +336,36 @@ ProgressBarControl.prototype.set = function(progress,animated)
 		this.progressbar.css({"width" : progress + "%"});
 	}
 	this.progressbarText.html(parseInt(progress) + "%");
+}
+;/**
+* Class for horizontal lists of controls
+* @class
+* @extends Control
+* @param {Object} options - Options for this RowControl
+*/
+function RowControl(options) {
+	options = options || {};
+	Control.call(this);
+	/**
+	* The Jquery element of this RowControl
+	* @type {JQuery}
+	*/
+	this.element = $("<div class='form-inline'></div>");
+}
+RowControl.prototype = Object.create(Control.prototype);
+/**
+* Adds a control to this RowControl (chainable)
+* @method
+* @param {Control} control The control to be added
+*/
+RowControl.prototype.add = function(control) {
+	control.prepareToolbar();
+	var newlet = $("<div class='form-group'></div>");
+	newlet.append(control.element);
+	control.holder = newlet;
+	this.element.append(newlet);
+	//this.holder._updateScrollbar();
+	return this;
 }
 ;/**
 * Class for select boxes
@@ -671,6 +753,11 @@ function Layer(options) {
 	* @type {JQuery}
 	*/
 	this.element = $("<div class='layer'></div>");
+	/**
+	* The name of this Layer
+	* @type {String}
+	*/
+	this.name = "Unnamed layer";
 }
 Layer.prototype = {};
 ;/**
@@ -714,6 +801,7 @@ function LayerHolder(options) {
 		self.activeLayer.element.find("*").nearest({x:x,y:y},{sameX:true,sameY:true}).trigger(event);
 	});
 	options.element.append(this.holderElement);
+	this.added = new Event();
 }
 LayerHolder.prototype = {};
 /**
@@ -723,6 +811,7 @@ LayerHolder.prototype = {};
 LayerHolder.prototype.add = function(layer) {
 	this.element.append(layer.element);
 	this.activeLayer = layer;
+	this.added.dispatch(layer);
 }
 ;/**
 * Class for Panels
@@ -1029,6 +1118,7 @@ function test()
 	app = new Application();
 
 	app.register.Panel(CustomPanel);
+	app.register.Panel(LayerMangerPanel);
 	app.register.DataBackend(NodeBackend);
 	app.register.Layer(CustomLayer);
 

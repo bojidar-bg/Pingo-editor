@@ -39,6 +39,7 @@ function LayerHolder(options) {
 		self.activeLayer.element.find("*").nearest({x:x,y:y},{sameX:true,sameY:true}).trigger(event);
 	});
 	options.element.append(this.holderElement);
+	this.added = new Event();
 }
 LayerHolder.prototype = {};
 /**
@@ -48,4 +49,5 @@ LayerHolder.prototype = {};
 LayerHolder.prototype.add = function(layer) {
 	this.element.append(layer.element);
 	this.activeLayer = layer;
+	this.added.dispatch(layer);
 }

@@ -59,6 +59,7 @@ CustomPanel.prototype = Object.create(Panel.prototype);
 
 function CustomLayer(app) {
 	Layer.call(this);
+	this.name = "Custom Layer";
 	var self = this;
 	for(i =0; i<8; i++)
 	{

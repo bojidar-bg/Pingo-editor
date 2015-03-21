@@ -7,6 +7,7 @@ function test()
 	app = new Application();
 
 	app.register.Panel(CustomPanel);
+	app.register.Panel(LayerMangerPanel);
 	app.register.DataBackend(NodeBackend);
 	app.register.Layer(CustomLayer);
 

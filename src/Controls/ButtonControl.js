@@ -47,9 +47,17 @@ ButtonControl.prototype.setText = function(text) {
 * @return                this (for chaining)
 */
 ButtonControl.prototype.setState = ButtonControl.prototype.set = function(state) {
-	if(self._isToggle) {
-		self.element.toggleClass('active');
-		self.value = !self.value;
+	if(this._isToggle) {
+		if(state)
+		{
+			this.element.addClass('active');
+			this.value = true;
+		}
+		else
+		{
+			this.element.removeClass('active');
+			this.value = false;
+		}
 	}
 	return this;
 }

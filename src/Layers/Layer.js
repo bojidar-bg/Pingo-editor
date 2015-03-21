@@ -9,5 +9,10 @@ function Layer(options) {
 	* @type {JQuery}
 	*/
 	this.element = $("<div class='layer'></div>");
+	/**
+	* The name of this Layer
+	* @type {String}
+	*/
+	this.name = "Unnamed layer";
 }
 Layer.prototype = {};
