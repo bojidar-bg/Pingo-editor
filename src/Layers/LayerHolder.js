@@ -19,9 +19,6 @@ function LayerHolder(options) {
 	* @type {JQuery}
 	*/
 	this.element = this.holderElement.children(".layers");
-	/**
-	 * The currently active layer
-	 */
 	this.activeLayer = false;
 	/**
 	* The Jquery overlay element of this LayerHolder
@@ -40,6 +37,8 @@ function LayerHolder(options) {
 	});
 	options.element.append(this.holderElement);
 	this.added = new Event();
+	this.activeChanged = new Event();
+	this.layers = [];
 }
 LayerHolder.prototype = {};
 /**
@@ -48,6 +47,15 @@ LayerHolder.prototype = {};
  */
 LayerHolder.prototype.add = function(layer) {
 	this.element.append(layer.element);
-	this.activeLayer = layer;
+	this.layers.push(layer);
 	this.added.dispatch(layer);
+	this.set(layer);
+}
+/**
+ * Set the active layer of this holder
+ * @param {Layer} layer The layer to be set as active
+ */
+LayerHolder.prototype.set = function(layer) {
+	this.activeLayer = layer;
+	this.activeChanged.dispatch(layer);
 }
