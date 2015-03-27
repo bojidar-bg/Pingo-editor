@@ -78,3 +78,9 @@ DropdownControl.prototype.setText = DropdownControl.prototype.set = function(tex
 	this.element.find(".text").html(text);
 	return this;
 }
+/**
+* Clears all list items of this dropdown control
+*/
+DropdownControl.prototype.clear = function() {
+	this.element.children("div").children("ul").children(".btn").remove();
+}

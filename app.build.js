@@ -100,6 +100,61 @@ ButtonControl.prototype.setState = ButtonControl.prototype.set = function(state)
 	return this;
 }
 ;/**
+* Class for button groups (think toolbars)
+* @class
+* @extends Control
+* @param {Object} options - Options for this ButtonGroupControl
+* @param {String} [options.label] - label to be included
+* @param {Boolean}[options.radio] - make the button group a radio button group
+*/
+function ButtonGroupControl(options) {
+	options = options || {};
+	Control.call(this);
+	/**
+	* The Jquery element of this ButtonGroupControl
+	* @type {JQuery}
+	*/
+	this.element = $("<div class='btn-group btn-group-justified'></div>");
+	this._isRadio = options.radio;
+	this.items = [];
+	this.label = options.label;
+}
+ButtonGroupControl.prototype = Object.create(Control.prototype);
+ButtonGroupControl.prototype.prepareToolbar = function() {
+	this.element.removeClass("btn-group-justified");
+}
+/**
+* Adds a ListItem to this button group control
+* @param {ListItem} listItem ListItem to be added
+*/
+ButtonGroupControl.prototype.add = function(listItem) {
+	var item = $("<div class='btn btn-default'>" + listItem.text + "</div>");
+	(function(listItem,self){
+		item.click(function() {
+			if(self._isRadio) {
+				for(var i in self.items) {
+					self.items[i].element.removeClass("active");
+				}
+				listItem.element.addClass("active");
+			}
+			listItem.selected.dispatch(listItem);
+		})
+	})(listItem,this);
+	listItem.element = item;
+	this.items.push(listItem);
+	this.element.append(item);
+}
+/**
+* Clears all list items of this button group control
+*/
+ButtonGroupControl.prototype.clear = function() {
+	for(var i in this.items) {
+		this.items[i].element = null;
+	}
+	this.items = [];
+	this.element.children(".btn").remove();
+}
+;/**
 * Class for vertical lists of controls
 * @class
 * @extends Control
@@ -222,6 +277,12 @@ DropdownControl.prototype.add = function(listItem) {
 DropdownControl.prototype.setText = DropdownControl.prototype.set = function(text) {
 	this.element.find(".text").html(text);
 	return this;
+}
+/**
+* Clears all list items of this dropdown control
+*/
+DropdownControl.prototype.clear = function() {
+	this.element.children("div").children("ul").children(".btn").remove();
 }
 ;/**
 * Class for input boxes controls
@@ -448,6 +509,7 @@ function Application(options) {
 	this.activePanelTarget = this.left;
 	//--Menus--//
 	this.dataBackend = null;
+	this.tools = new ButtonGroupControl({"radio":true});
 	this.menus = {};
 	this.menus.addPanel = new DropdownControl({text:"Add panel"});
 	this.menus.addLayer = new DropdownControl({text:"Add layer"});
@@ -458,8 +520,12 @@ function Application(options) {
 	this.toolbar.add(this.menus.addPanel,{"right":true});
 	this.toolbar.add(this.menus.addLayer,{"right":true});
 	this.toolbar.add(this.menus.selectBackend,{"right":true});
+	this.toolbar.add(this.tools,{"right":false});
 	//--Layers--//
 	this.layerHolder = new LayerHolder({"element":$("body")});
+	this.layerHolder.activeChanged.add(function() {
+		self.tools.clear();
+	});
 	var layers = this.layerHolder.element;
 	var layersHolder = this.layerHolder.holderElement;
 	var startX = 0;
@@ -561,7 +627,7 @@ Application.prototype._drawGrid.context = Application.prototype._drawGrid.canvas
 	* Snaps coordinates x and y to nearest grid intersection
 	* @param  {Number} x X coordinate
 	* @param  {Number} y Y coordinate
-	* @return {Object} coordinates x and y were snapped to ({x:<snapped on X>,y:<snapped on Y>})
+	* @return {Object} where coordinates x and y were snapped to ({x:<snapped on X>,y:<snapped on Y>})
 	* @method
 	*/
 Application.prototype.snap = function(x,y) {
@@ -758,6 +824,7 @@ function Layer(options) {
 	* @type {String}
 	*/
 	this.name = "Unnamed layer";
+	this.activated = new Event();
 }
 Layer.prototype = {};
 ;/**
@@ -795,7 +862,9 @@ function LayerHolder(options) {
 		if(!self.activeLayer)return;
 		var x = event.pageX;
 		var y = event.pageY;
-		self.activeLayer.element.find("*").nearest({x:x,y:y},{sameX:true,sameY:true}).trigger(event);
+		var nearest = self.activeLayer.element.find("*").nearest({x:x,y:y},{sameX:true,sameY:true});
+		if(nearest.length)nearest.trigger(event);
+		else self.activeLayer.element.trigger(event);
 	});
 	options.element.append(this.holderElement);
 	this.added = new Event();
@@ -820,6 +889,7 @@ LayerHolder.prototype.add = function(layer) {
 LayerHolder.prototype.set = function(layer) {
 	this.activeLayer = layer;
 	this.activeChanged.dispatch(layer);
+	layer.activated.dispatch(layer);
 }
 ;/**
 * Class for Panels
@@ -1129,6 +1199,7 @@ function test()
 	app.register.Panel(LayerMangerPanel);
 	app.register.DataBackend(NodeBackend);
 	app.register.Layer(CustomLayer);
+	app.register.Layer(WhiteBoardLayer);
 
 }
 window.onload=test;

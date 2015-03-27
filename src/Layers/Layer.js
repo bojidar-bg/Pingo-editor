@@ -14,5 +14,6 @@ function Layer(options) {
 	* @type {String}
 	*/
 	this.name = "Unnamed layer";
+	this.activated = new Event();
 }
 Layer.prototype = {};

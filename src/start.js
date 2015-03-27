@@ -10,6 +10,7 @@ function test()
 	app.register.Panel(LayerMangerPanel);
 	app.register.DataBackend(NodeBackend);
 	app.register.Layer(CustomLayer);
+	app.register.Layer(WhiteBoardLayer);
 
 }
 window.onload=test;

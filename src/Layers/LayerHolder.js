@@ -33,7 +33,9 @@ function LayerHolder(options) {
 		if(!self.activeLayer)return;
 		var x = event.pageX;
 		var y = event.pageY;
-		self.activeLayer.element.find("*").nearest({x:x,y:y},{sameX:true,sameY:true}).trigger(event);
+		var nearest = self.activeLayer.element.find("*").nearest({x:x,y:y},{sameX:true,sameY:true});
+		if(nearest.length)nearest.trigger(event);
+		else self.activeLayer.element.trigger(event);
 	});
 	options.element.append(this.holderElement);
 	this.added = new Event();
@@ -58,4 +60,5 @@ LayerHolder.prototype.add = function(layer) {
 LayerHolder.prototype.set = function(layer) {
 	this.activeLayer = layer;
 	this.activeChanged.dispatch(layer);
+	layer.activated.dispatch(layer);
 }

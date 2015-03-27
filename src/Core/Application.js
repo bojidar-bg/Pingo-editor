@@ -12,6 +12,7 @@ function Application(options) {
 	this.activePanelTarget = this.left;
 	//--Menus--//
 	this.dataBackend = null;
+	this.tools = new ButtonGroupControl({"radio":true});
 	this.menus = {};
 	this.menus.addPanel = new DropdownControl({text:"Add panel"});
 	this.menus.addLayer = new DropdownControl({text:"Add layer"});
@@ -22,8 +23,12 @@ function Application(options) {
 	this.toolbar.add(this.menus.addPanel,{"right":true});
 	this.toolbar.add(this.menus.addLayer,{"right":true});
 	this.toolbar.add(this.menus.selectBackend,{"right":true});
+	this.toolbar.add(this.tools,{"right":false});
 	//--Layers--//
 	this.layerHolder = new LayerHolder({"element":$("body")});
+	this.layerHolder.activeChanged.add(function() {
+		self.tools.clear();
+	});
 	var layers = this.layerHolder.element;
 	var layersHolder = this.layerHolder.holderElement;
 	var startX = 0;
@@ -125,7 +130,7 @@ Application.prototype._drawGrid.context = Application.prototype._drawGrid.canvas
 	* Snaps coordinates x and y to nearest grid intersection
 	* @param  {Number} x X coordinate
 	* @param  {Number} y Y coordinate
-	* @return {Object} coordinates x and y were snapped to ({x:<snapped on X>,y:<snapped on Y>})
+	* @return {Object} where coordinates x and y were snapped to ({x:<snapped on X>,y:<snapped on Y>})
 	* @method
 	*/
 Application.prototype.snap = function(x,y) {

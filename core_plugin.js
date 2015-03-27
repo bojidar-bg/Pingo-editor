@@ -35,3 +35,39 @@ function LayerMangerPanel(app) {
 }
 LayerMangerPanel.label = "Layer Manager";
 LayerMangerPanel.prototype = Object.create(Panel.prototype);
+
+function WhiteBoardLayer(app) {
+	Layer.call(this);
+	this.name = "Custom Layer";
+	var self = this;
+	this._app = app;
+	this.tool = "";
+	var select = function() {
+		self.tool = this.value;
+	}
+	var freehand = new ListItem({text:"Freehand"});
+	freehand.value = "freehand";
+	freehand.selected.add(select);
+	var rect = new ListItem({text:"Rectangle"});
+	rect.value = "rect";
+	rect.selected.add(select);
+	var circle = new ListItem({text:"Circle"});
+	circle.value = "circle";
+	circle.selected.add(select);
+	this.tools = [
+		freehand,
+		rect,
+		circle
+	];
+	this.activated.add(function(){
+		for(var i in this.tools) {
+			this._app.tools.add(this.tools[i]);
+			if(this.tool == this.tools[i].value) {
+				this.tools[i].element.click();
+			}
+		}
+	});
+	this.element.click(function(){alert(self.tool)});
+}
+WhiteBoardLayer.prototype = Object.create(Layer.prototype);
+WhiteBoardLayer.label = "Whiteboard";
