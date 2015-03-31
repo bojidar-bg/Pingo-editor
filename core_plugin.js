@@ -38,7 +38,7 @@ LayerMangerPanel.prototype = Object.create(Panel.prototype);
 
 function WhiteBoardLayer(app) {
 	Layer.call(this);
-	this.name = "Custom Layer";
+	this.name = "Whiteboard Layer";
 	var self = this;
 	this._app = app;
 	this.tool = "";
@@ -67,7 +67,24 @@ function WhiteBoardLayer(app) {
 			}
 		}
 	});
-	this.element.click(function(){alert(self.tool)});
+	var path;
+	pathElement = null;
+	var sx;
+	var sy;
+	this.element.svg({onLoad : function() {
+		self.svgElement = self.element.svg("get");
+		self.element.drag("dragstart",function(e,c) {
+			sx = (c.startX - app._positionX) * (1/app._zoom);
+			sy = (c.startY - app._positionY) * (1/app._zoom);
+			path = "M" + sx + "," + sy;
+			pathElement = self.svgElement.path(path,{fill:"none",strokeWidth:"3px",stroke:"#000"});
+		}).drag("drag",function(e,c) {
+			var x = sx + c.deltaX * (1/app._zoom);
+			var y = sy + c.deltaY * (1/app._zoom);
+			path += "L" + x + "," + y;
+			pathElement.setAttribute("d", path);
+		});
+	},settings:{class_:"whiteboard"}});
 }
 WhiteBoardLayer.prototype = Object.create(Layer.prototype);
 WhiteBoardLayer.label = "Whiteboard";

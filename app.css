@@ -172,6 +172,9 @@ button.icon-btn {
 	overflow:visible;
 	z-index: 250;
 }
+.whiteboard {
+	overflow: visible !important;
+}
 /*------------------------------Toolbar-----------------------------------*/
 .navbar {
 	z-index: 200;

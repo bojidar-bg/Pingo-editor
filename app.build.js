@@ -530,8 +530,6 @@ function Application(options) {
 	var layersHolder = this.layerHolder.holderElement;
 	var startX = 0;
 	var startY = 0;
-	var currentX = 0;
-	var currentY = 0;
 	layersHolder.css("background","url(" + this._drawGrid() + ")");
 	//Pan//
 	var startX, startY;
@@ -540,17 +538,17 @@ function Application(options) {
 		startY = parseInt(layers.css("margin-top"));
 	},{which:2});
 	layersHolder.drag("drag", function(event,data) {
-		currentX = startX + data.deltaX;
-		currentY = startY + data.deltaY;
-		layers.css("margin-left", currentX);
-		layers.css("margin-top", currentY);
-		layersHolder.css("background-position-x", currentX);
-		layersHolder.css("background-position-y", currentY);
+		self._positionX = startX + data.deltaX;
+		self._positionY = startY + data.deltaY;
+		layers.css("margin-left", self._positionX);
+		layers.css("margin-top", self._positionY);
+		layersHolder.css("background-position-x", self._positionX);
+		layersHolder.css("background-position-y", self._positionY);
 	},{which:2});
 	//Zoom//
 	layersHolder.mousewheel(function(event) {
-		var relativeMouseX = event.pageX - currentX;
-		var relativeMouseY = event.pageY - currentY;
+		var relativeMouseX = event.pageX - self._positionX;
+		var relativeMouseY = event.pageY - self._positionY;
 		var oldZoom = self._zoom;
 		if(event.deltaY * event.deltaFactor > 0)// zoom in
 		{
@@ -562,10 +560,10 @@ function Application(options) {
 		}
 		if(self._zoom > self._maxZoom)self._zoom = self._maxZoom;
 		if(self._zoom < self._minZoom)self._zoom = self._minZoom;
-		currentX += relativeMouseX - relativeMouseX * self._zoom / oldZoom;
-		currentY += relativeMouseY - relativeMouseY * self._zoom / oldZoom;
-		layers.css("margin-left", currentX);
-		layers.css("margin-top", currentY);
+		self._positionX += relativeMouseX - relativeMouseX * self._zoom / oldZoom;
+		self._positionY += relativeMouseY - relativeMouseY * self._zoom / oldZoom;
+		layers.css("margin-left", self._positionX);
+		layers.css("margin-top", self._positionY);
 		layers.css("transform","scale(" + self._zoom + "," + self._zoom + ")");
 		//Draw the grid
 		var backgroundSize = self._gridSize * self._zoom;
@@ -577,8 +575,8 @@ function Application(options) {
 		}
 		self._realGridSize = backgroundSize;
 		layersHolder.css("background","url(" + self._drawGrid() + ")");
-		layersHolder.css("background-position-x", currentX);
-		layersHolder.css("background-position-y", currentY);
+		layersHolder.css("background-position-x", self._positionX);
+		layersHolder.css("background-position-y", self._positionY);
 	});
 }
 /*--Methods--*/
@@ -588,6 +586,8 @@ Application.prototype._gridSize = 200;
 Application.prototype._realGridSize = 200;
 Application.prototype._minZoom = 0.0625;
 Application.prototype._zoom = 1;
+Application.prototype._positionX = 0;
+Application.prototype._positionY = 0;
 Application.prototype._maxZoom = 4;
 Application.prototype._drawGrid = function()
 {
