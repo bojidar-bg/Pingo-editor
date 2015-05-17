@@ -141,6 +141,12 @@ button.icon-btn {
 .panel-heading {
 	margin-bottom: -1px;
 }
+.form-group {
+	margin-bottom: 3px;
+}
+.form-inline .form-group {
+	margin-right: 3px;
+}
 /*---------------------------------Layers---------------------------------*/
 .layers-holder {
 	width:100%;

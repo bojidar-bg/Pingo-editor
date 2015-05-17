@@ -6,7 +6,7 @@
 */
 function DataBackend(app,options) {
 	/**
-	 * The "received" event (context = DataBackend)
+	 * The "received" event (context = DataBackendEvent)
 	 * @type {Event}
 	 */
 	this.received = new Event();
@@ -14,11 +14,9 @@ function DataBackend(app,options) {
 DataBackend.prototype = {};
 /**
 * Sends and event to the queue
-* @param  {String}  event     Name of the event to be send
-* @param  {Object}  eventData Data for the event
-* @param  {Boolean} [minor]   Is dropping the event an option?
+* @param  {DataBackendEvent}  event     Event to be send
 */
-DataBackend.prototype.send = function(event, eventData, minor) {}
+DataBackend.prototype.send = function(event) {}
 /**
 * Saves data
 * @param  {String}  field     Name of the field to write to

@@ -11,7 +11,7 @@ function Application(options) {
 	this.toolbar = new Toolbar({element:$("#navbar"),brand:"<span class='glyphicon glyphicon-pencil'></span> Pingo"});
 	this.activePanelTarget = this.left;
 	//--Menus--//
-	this.dataBackend = null;
+	this.dataBackend = new DataBackend();
 	this.tools = new ButtonGroupControl({"radio":true});
 	this.menus = {};
 	this.menus.addPanel = new DropdownControl({text:"Add panel"});
@@ -89,9 +89,9 @@ Application.prototype._gridSize = 200;
 Application.prototype._realGridSize = 200;
 Application.prototype._minZoom = 0.0625;
 Application.prototype._zoom = 1;
+Application.prototype._maxZoom = 4;
 Application.prototype._positionX = 0;
 Application.prototype._positionY = 0;
-Application.prototype._maxZoom = 4;
 Application.prototype._drawGrid = function()
 {
 	var position = this._gridSize/this._realGridSize;
@@ -138,7 +138,7 @@ Application.prototype.snap = function(x,y) {
 	var atraction = 8;
 	var lineSnaps = [{spacing:1,force:0},{spacing:1,force:0},{spacing:1,force:0}];
 	//Smallest lines//
-	lineSnaps[2].force = 1-position;
+	lineSnaps[2].force = 1 - position;
 	lineSnaps[2].spacing = this._realGridSize / this._gridDivisions / this._gridDivisions;
 	//Medium lines//
 	lineSnaps[1].force = 0.5;
@@ -190,7 +190,9 @@ Application.prototype.register.DataBackend = function(type)
 	var t = type;
 	var self = this._app;
 	li.selected.add(function() {
+		var oldReceived = self.dataBackend.received;
 		self.dataBackend = new t(self,{});
+		self.dataBackend.received = oldReceived;
 	});
 	this._app.menus.selectBackend.add(li);
 }

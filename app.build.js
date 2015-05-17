@@ -309,7 +309,10 @@ function InputBoxControl(options) {
 	* @type {Event}
 	*/
 	this.changed = new Event();
-	this.element.keyup(function() {self.value = self.element.val();self.changed.dispatch(self);});
+	this.element.keyup(function() {
+		self.value = self.element.val();
+		self.changed.dispatch(self);
+	});
 	this.label = options.label;
 }
 InputBoxControl.prototype = Object.create(Control.prototype);
@@ -508,7 +511,7 @@ function Application(options) {
 	this.toolbar = new Toolbar({element:$("#navbar"),brand:"<span class='glyphicon glyphicon-pencil'></span> Pingo"});
 	this.activePanelTarget = this.left;
 	//--Menus--//
-	this.dataBackend = null;
+	this.dataBackend = new DataBackend();
 	this.tools = new ButtonGroupControl({"radio":true});
 	this.menus = {};
 	this.menus.addPanel = new DropdownControl({text:"Add panel"});
@@ -586,9 +589,9 @@ Application.prototype._gridSize = 200;
 Application.prototype._realGridSize = 200;
 Application.prototype._minZoom = 0.0625;
 Application.prototype._zoom = 1;
+Application.prototype._maxZoom = 4;
 Application.prototype._positionX = 0;
 Application.prototype._positionY = 0;
-Application.prototype._maxZoom = 4;
 Application.prototype._drawGrid = function()
 {
 	var position = this._gridSize/this._realGridSize;
@@ -635,7 +638,7 @@ Application.prototype.snap = function(x,y) {
 	var atraction = 8;
 	var lineSnaps = [{spacing:1,force:0},{spacing:1,force:0},{spacing:1,force:0}];
 	//Smallest lines//
-	lineSnaps[2].force = 1-position;
+	lineSnaps[2].force = 1 - position;
 	lineSnaps[2].spacing = this._realGridSize / this._gridDivisions / this._gridDivisions;
 	//Medium lines//
 	lineSnaps[1].force = 0.5;
@@ -687,7 +690,9 @@ Application.prototype.register.DataBackend = function(type)
 	var t = type;
 	var self = this._app;
 	li.selected.add(function() {
+		var oldReceived = self.dataBackend.received;
 		self.dataBackend = new t(self,{});
+		self.dataBackend.received = oldReceived;
 	});
 	this._app.menus.selectBackend.add(li);
 }
@@ -783,7 +788,7 @@ Utils = {
 */
 function DataBackend(app,options) {
 	/**
-	 * The "received" event (context = DataBackend)
+	 * The "received" event (context = DataBackendEvent)
 	 * @type {Event}
 	 */
 	this.received = new Event();
@@ -791,11 +796,9 @@ function DataBackend(app,options) {
 DataBackend.prototype = {};
 /**
 * Sends and event to the queue
-* @param  {String}  event     Name of the event to be send
-* @param  {Object}  eventData Data for the event
-* @param  {Boolean} [minor]   Is dropping the event an option?
+* @param  {DataBackendEvent}  event     Event to be send
 */
-DataBackend.prototype.send = function(event, eventData, minor) {}
+DataBackend.prototype.send = function(event) {}
 /**
 * Saves data
 * @param  {String}  field     Name of the field to write to
@@ -808,6 +811,20 @@ DataBackend.prototype.save = function(field, data) {}
 * @return {Object}       Data read
 */
 DataBackend.prototype.retrieve = function(field) {}
+;/**
+* DataBackendEvent class
+* @class
+* @param {Object} options - Options for this DataBackendEvent
+* @param {String} options.name - Name of this DataBackendEvent
+* @param {Object} options.data - Data of this DataBackendEvent
+* @param {Boolean} options.droppable - Is this DataBackendEvent droppable
+*/
+function DataBackendEvent(options) {
+	this.name = options.name;
+	this.data = options.data;
+	this.droppable = options.droppable;
+}
+DataBackendEvent.prototype = {}
 ;/**
 * Class for Layers
 * @class
@@ -892,6 +909,108 @@ LayerHolder.prototype.set = function(layer) {
 	layer.activated.dispatch(layer);
 }
 ;/**
+* Class for Dialogs
+* @class
+* @param {Object} options Options for this Panel
+* @param {String} options.heading Dialogs's heading
+*/
+function Dialog(options) {
+	var element = $("\
+	<div class='modal fade' role='dialog'>\
+		<div class='modal-dialog'>\
+			<div class='modal-content'>\
+				<div class='modal-header'>\
+					<button type='button' class='close'>\
+							<small class='glyphicon glyphicon-remove'></small>\
+					</button>\
+					<h4 class='modal-title'>" + options.heading + "</h4>\
+				</div>\
+				<div class='modal-body'>\
+					<div class='container-fluid'></div>\
+				</div>\
+				<div class='modal-footer form-inline'></div>\
+			</div>\
+		</div>\
+	</div>");
+		/**
+		* The Jquery element of this Dialog
+		* @type {JQuery}
+		*/
+	this.element = element;
+
+	$("body").append(this.element);
+
+	element.modal({"show":true, "backdrop":"static", "keyboard": false});
+		/**
+		* The Jquery element of this Dialog's heading
+		* @type {JQuery}
+		*/
+	this.headingElement = element.find(".modal-title");
+		/**
+		* The Jquery element of this Dialog's body
+		* @type {JQuery}
+		*/
+	this.bodyElement = element.find(".container-fluid");
+		/**
+		* The Jquery element of this Dialog's footer
+		* @type {JQuery}
+		*/
+	this.footerElement = element.find(".modal-footer");
+	var self = this;
+	this.element.find(".close").click(function() {
+		self.destroy();
+		$(this).off("click");
+	})
+	this._target = null;
+
+}
+Dialog._setLabel = function(label){this.holder.children("label").html(label);}
+Dialog.prototype = {};
+/**
+* Adds a control to this Dialog's body (chainable)
+* @method
+* @param {Control} control The control to be added
+*/
+Dialog.prototype.addToBody = Dialog.prototype.add = function(control) {
+	var newlet;
+	if(control.label) {
+		newlet = $("<div class='form-group'><label class='col-xs-4 control-label'>"+control.label+"</label><div class='col-xs-8'></div><div class='clearfix'></div></div>");
+		newlet.children(".col-xs-8").append(control.element);
+	} else {
+		newlet = $("<div class='form-group'><div class='col-xs-12'></div><div class='clearfix'></div></div>");
+		newlet.children(".col-xs-12").append(control.element);
+	}
+	control.holder = newlet;
+	control.setLabel = Panel._setLabel;
+	this.bodyElement.append(newlet);
+	return this;
+}
+/**
+* Adds a control to this Dialog's footer (chainable)
+* @method
+* @param {Control} control The control to be added
+*/
+Dialog.prototype.addFooter = function(control) {
+	control.prepareToolbar();
+	var newlet;
+	newlet = $("<div class='form-group'></div>");
+	newlet.append(control.element);
+	this.footerElement.append(newlet);
+	control.holder = newlet;
+	return this;
+}
+/**
+* Destroy this Dialog
+* @method
+*/
+Dialog.prototype.destroy = function() {
+	var self = this;
+	this.element.modal("hide");
+	this.element.on("hidden.bs.modal", function (e){
+	  self.element.remove();
+	});
+}
+;/**
 * Class for Panels
 * @class
 * @param {Object} options Options for this Panel
@@ -967,10 +1086,10 @@ Panel.prototype._updateScrollbar = function() {
 Panel.prototype.add = function(control) {
 	var newlet;
 	if(control.label) {
-		newlet = $("<div class='from-group'><label class='col-xs-4 control-label'>"+control.label+"</label><div class='col-xs-8'></div><div class='clearfix'></div></div>");
+		newlet = $("<div class='form-group'><label class='col-xs-4 control-label'>"+control.label+"</label><div class='col-xs-8'></div><div class='clearfix'></div></div>");
 		newlet.children(".col-xs-8").append(control.element);
 	} else {
-		newlet = $("<div class='from-group'><div class='col-xs-12'></div><div class='clearfix'></div></div>");
+		newlet = $("<div class='form-group'><div class='col-xs-12'></div><div class='clearfix'></div></div>");
 		newlet.children(".col-xs-12").append(control.element);
 	}
 	control.holder = newlet;
@@ -1196,8 +1315,9 @@ function test()
 	app = new Application();
 
 	app.register.Panel(CustomPanel);
-	app.register.Panel(LayerMangerPanel);
+	app.register.Panel(LayerManagerPanel);
 	app.register.DataBackend(NodeBackend);
+	app.register.DataBackend(LocalStorageBackend);
 	app.register.Layer(CustomLayer);
 	app.register.Layer(WhiteBoardLayer);
 

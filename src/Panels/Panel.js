@@ -74,10 +74,10 @@ Panel.prototype._updateScrollbar = function() {
 Panel.prototype.add = function(control) {
 	var newlet;
 	if(control.label) {
-		newlet = $("<div class='from-group'><label class='col-xs-4 control-label'>"+control.label+"</label><div class='col-xs-8'></div><div class='clearfix'></div></div>");
+		newlet = $("<div class='form-group'><label class='col-xs-4 control-label'>"+control.label+"</label><div class='col-xs-8'></div><div class='clearfix'></div></div>");
 		newlet.children(".col-xs-8").append(control.element);
 	} else {
-		newlet = $("<div class='from-group'><div class='col-xs-12'></div><div class='clearfix'></div></div>");
+		newlet = $("<div class='form-group'><div class='col-xs-12'></div><div class='clearfix'></div></div>");
 		newlet.children(".col-xs-12").append(control.element);
 	}
 	control.holder = newlet;

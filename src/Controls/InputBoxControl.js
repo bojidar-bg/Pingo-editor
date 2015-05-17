@@ -23,7 +23,10 @@ function InputBoxControl(options) {
 	* @type {Event}
 	*/
 	this.changed = new Event();
-	this.element.keyup(function() {self.value = self.element.val();self.changed.dispatch(self);});
+	this.element.keyup(function() {
+		self.value = self.element.val();
+		self.changed.dispatch(self);
+	});
 	this.label = options.label;
 }
 InputBoxControl.prototype = Object.create(Control.prototype);

@@ -1,5 +1,5 @@
-function LayerMangerPanel(app) {
-	Panel.call(this,{"heading":LayerMangerPanel.label});
+function LayerManagerPanel(app) {
+	Panel.call(this,{"heading":LayerManagerPanel.label});
 	var layerList = new ColumnControl();
 	this.add(layerList);
 	var tracked = [];
@@ -33,8 +33,8 @@ function LayerMangerPanel(app) {
 	app.layerHolder.activeChanged.add(update);
 	update.call(app.layerHolder.activeLayer);
 }
-LayerMangerPanel.label = "Layer Manager";
-LayerMangerPanel.prototype = Object.create(Panel.prototype);
+LayerManagerPanel.label = "Layer Manager";
+LayerManagerPanel.prototype = Object.create(Panel.prototype);
 
 function WhiteBoardLayer(app) {
 	Layer.call(this);
@@ -71,6 +71,7 @@ function WhiteBoardLayer(app) {
 	pathElement = null;
 	var sx;
 	var sy;
+	var id = 0;
 	this.element.svg({onLoad : function() {
 		self.svgElement = self.element.svg("get");
 		self.element.drag("dragstart",function(e,c) {
@@ -78,13 +79,45 @@ function WhiteBoardLayer(app) {
 			sy = (c.startY - app._positionY) * (1/app._zoom);
 			path = "M" + sx + "," + sy;
 			pathElement = self.svgElement.path(path,{fill:"none",strokeWidth:"3px",stroke:"#000"});
+			id = id + 1;
+			self._app.dataBackend.send(new DataBackendEvent({"name":"PathStart","data":{"id":id}}));
 		}).drag("drag",function(e,c) {
 			var x = sx + c.deltaX * (1/app._zoom);
 			var y = sy + c.deltaY * (1/app._zoom);
 			path += "L" + x + "," + y;
 			pathElement.setAttribute("d", path);
-		});
+			self._app.dataBackend.send(new DataBackendEvent({"name":"PathMove","data":{"id":id,"path":path},"droppable":true}));
+		}).drag("dragend",function(e,c) {
+			self._app.dataBackend.send(new DataBackendEvent({"name":"PathEnd","data":{"id":id,"path":path}}));
+		});;
 	},settings:{class_:"whiteboard"}});
 }
 WhiteBoardLayer.prototype = Object.create(Layer.prototype);
 WhiteBoardLayer.label = "Whiteboard";
+
+function LocalStorageBackend(app,options) {
+	DataBackend.call(this);
+	this.prefix = "pingo-";
+	this.storage = localStorage;
+	var self = this;
+	window.addEventListener("storage", function(event) {
+		if(event.key.search(self.prefix + "event-") == 0) {
+			self.received.dispatch(new DataBackendEvent({
+				"name":event.key.substring((self.prefix + "event-").length + 5),
+				"data":JSON.parse(event.newValue)
+			}));
+		}
+	});
+}
+LocalStorageBackend.prototype = Object.create(DataBackend.prototype);
+LocalStorageBackend.prototype.send = function(event) {
+	this.storage.setItem(this.prefix + "event-" + Math.round(Math.random()*1632958+46656).toString(36) + "-" + event.name, JSON.stringify(event.data));
+}
+LocalStorageBackend.prototype.save = function(field, data) {
+	this.storage.setItem(this.prefix + "data-" + field, JSON.stringify(data));
+}
+LocalStorageBackend.prototype.retrieve = function(field) {
+	return JSON.parse(this.storage.getItem(this.prefix + "data-" + field));
+}
+LocalStorageBackend.label = "Local storage";
+LocalStorageBackend.icon = "";
